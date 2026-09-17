@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Учет личных расходов студента</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="desktop-wrapper">
+    <div class="win98-window">
+      <!-- Title Bar -->
+      <div class="title-bar">
+        <div class="title-bar-text">Учет личных расходов студента - [Финансы v1.0]</div>
+        <div class="title-bar-controls">
+          <button type="button" class="win-btn" aria-label="Свернуть">_</button>
+          <button type="button" class="win-btn" aria-label="Развернуть">&#9633;</button>
+          <button type="button" class="win-btn" aria-label="Закрыть">X</button>
+        </div>
+      </div>
+
+      <!-- Menu Bar -->
+      <div class="menu-bar">
+        <span class="menu-item"><u>Ф</u>айл</span>
+        <span class="menu-item"><u>П</u>равка</span>
+        <span class="menu-item"><u>В</u>ид</span>
+        <span class="menu-item" id="menuScenario"><u>Т</u>ест ТЗ</span>
+        <span class="menu-item" id="menuHelp"><u>С</u>правка</span>
+      </div>
+
+      <!-- Window Body -->
+      <div class="window-body">
+        <!-- Tabs Bar -->
+        <div class="tabs-container">
+          <button type="button" class="tab active" data-tab="tab-summary">Сводка</button>
+          <button type="button" class="tab" data-tab="tab-add">Новый расход</button>
+          <button type="button" class="tab" data-tab="tab-history">Список операций</button>
+          <button type="button" class="tab" data-tab="tab-budget">Бюджет</button>
+        </div>
+
+        <!-- TAB 1: SUMMARY -->
+        <div id="tab-summary" class="tab-content active">
+          <div class="form-row-win">
+            <label for="monthSelect">Отчетный период:</label>
+            <div class="input-container" style="max-width: 160px;">
+              <input type="month" id="monthSelect">
+            </div>
+            <button type="button" id="refreshBtn" class="btn-win btn-win-sm">Обновить</button>
+          </div>
+
+          <fieldset class="group-box">
+            <legend>Итоги за месяц</legend>
+            <div class="stats-grid">
+              <div class="sunken-panel stat-box">
+                <span class="stat-title">Общая сумма трат:</span>
+                <span class="stat-number" id="totalAmount">0.00 ₸</span>
+                <span class="stat-desc" id="operationCount">Записей: 0</span>
+              </div>
+              <div class="sunken-panel stat-box">
+                <span class="stat-title">Лимит бюджета:</span>
+                <span class="stat-number" id="budgetValue">Не задан</span>
+                <span class="stat-desc" id="budgetRemaining">Остаток: -</span>
+              </div>
+            </div>
+
+            <div style="margin-top: 8px;">
+              <span class="stat-title" style="display:block; margin-bottom: 2px;">Использование бюджета:</span>
+              <div class="win-progress-track">
+                <div class="win-progress-fill" id="budgetProgressBar"></div>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="group-box">
+            <legend>Распределение по категориям</legend>
+            <div class="sunken-panel" style="padding: 2px; max-height: 200px; overflow-y: auto;">
+              <table class="categories-table">
+                <thead>
+                  <tr>
+                    <th>Категория</th>
+                    <th style="width: 100px;">Сумма (₸)</th>
+                    <th style="width: 50px;">%</th>
+                    <th style="width: 110px;">Индикатор</th>
+                  </tr>
+                </thead>
+                <tbody id="categoriesTableBody">
+                  <tr>
+                    <td colspan="4" style="text-align: center; color: #606060;">Нет данных</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </fieldset>
+        </div>
+
+        <!-- TAB 2: ADD EXPENSE -->
+        <div id="tab-add" class="tab-content">
+          <fieldset class="group-box">
+            <legend>Параметры нового расхода</legend>
+            <form id="expenseForm" novalidate>
+              <div class="form-row-win">
+                <label for="amountInput">Сумма (₸): *</label>
+                <div class="input-container">
+                  <input type="number" id="amountInput" step="0.01" min="0.01" placeholder="1500.00" required>
+                  <div class="field-error" id="amountError"></div>
+                </div>
+              </div>
+
+              <div class="form-row-win">
+                <label for="categoryInput">Категория: *</label>
+                <div class="input-container">
+                  <input type="text" id="categoryInput" placeholder="Выберите или введите категорию" required>
+                  <div class="category-quick-btns" id="quickCategoryBtns">
+                    <button type="button" class="btn-win btn-win-sm" data-cat="Еда">Еда</button>
+                    <button type="button" class="btn-win btn-win-sm" data-cat="Транспорт">Транспорт</button>
+                    <button type="button" class="btn-win btn-win-sm" data-cat="Жильё">Жильё</button>
+                    <button type="button" class="btn-win btn-win-sm" data-cat="Учёба">Учёба</button>
+                    <button type="button" class="btn-win btn-win-sm" data-cat="Кафе">Кафе</button>
+                    <button type="button" class="btn-win btn-win-sm" data-cat="Развлечения">Развлечения</button>
+                    <button type="button" class="btn-win btn-win-sm" data-cat="Покупки">Покупки</button>
+                  </div>
+                  <div class="field-error" id="categoryError"></div>
+                </div>
+              </div>
+
+              <div class="form-row-win">
+                <label for="dateInput">Дата: *</label>
+                <div class="input-container">
+                  <input type="date" id="dateInput" required>
+                  <div class="field-error" id="dateError"></div>
+                </div>
+              </div>
+
+              <div class="form-row-win">
+                <label for="descriptionInput">Описание:</label>
+                <div class="input-container">
+                  <input type="text" id="descriptionInput" placeholder="Комментарий (необязательно)">
+                </div>
+              </div>
+
+              <div class="form-actions-win">
+                <button type="reset" class="btn-win">Очистить</button>
+                <button type="submit" class="btn-win btn-win-primary">Сохранить запись</button>
+              </div>
+            </form>
+          </fieldset>
+        </div>
+
+        <!-- TAB 3: HISTORY -->
+        <div id="tab-history" class="tab-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <span>Журнал операций за выбранный месяц:</span>
+            <button type="button" id="runScenarioBtn" class="btn-win btn-win-sm">Запустить проверку ТЗ (Раздел 7)</button>
+          </div>
+
+          <div class="expenses-table-wrap">
+            <table class="win-table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Дата</th>
+                  <th>Категория</th>
+                  <th style="width: 90px;">Сумма (₸)</th>
+                  <th>Описание</th>
+                  <th style="width: 65px; text-align: center;">Действие</th>
+                </tr>
+              </thead>
+              <tbody id="expensesTableBody">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: #606060; padding: 12px;">Записей не обнаружено</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 4: BUDGET -->
+        <div id="tab-budget" class="tab-content">
+          <fieldset class="group-box">
+            <legend>Управление бюджетом на текущий период</legend>
+            <div class="form-row-win">
+              <label for="budgetLimitInput">Лимит (₸):</label>
+              <div class="input-container" style="max-width: 180px;">
+                <input type="number" id="budgetLimitInput" min="1" step="100" placeholder="20000">
+              </div>
+              <button type="button" id="saveBudgetBtn" class="btn-win btn-win-primary">Задать лимит</button>
+            </div>
+            <p style="margin-top: 8px; color: #404040; line-height: 1.4;">
+              При превышении суммы расходов шкала индикатора переходит в аварийный режим, а в строке состояния отображается предупреждение о перерасходе.
+            </p>
+          </fieldset>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+          <div class="status-panel flex-1" id="statusBarMessage">Готов</div>
+          <div class="status-panel" id="statusBarPeriod">Период: -</div>
+          <div class="status-panel">Валюта: KZT (₸)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Win98 Modal Dialog -->
+  <div id="winModal" class="modal-win98">
+    <div class="win98-window modal-dialog">
+      <div class="title-bar">
+        <div class="title-bar-text" id="modalTitle">Сообщение системы</div>
+        <div class="title-bar-controls">
+          <button type="button" class="win-btn" id="modalCloseX">X</button>
+        </div>
+      </div>
+      <div class="window-body">
+        <div class="modal-message" id="modalMessage"></div>
+        <div class="modal-btns">
+          <button type="button" class="btn-win btn-win-primary" id="modalOkBtn">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastWin" class="toast-win"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
